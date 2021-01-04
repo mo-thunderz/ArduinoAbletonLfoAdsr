@@ -244,7 +244,7 @@ void loop() {
         else if(cc_type2 == ID_DAC0_WAVEFORM) 
           dac0_lfo.setWaveForm(value);
         else if(cc_type2 == ID_DAC0_PHASE) 
-          dac0_lfo.setMode1Phase((4095 - (float)value) / 4096); 
+          dac0_lfo.setMode1Phase((360 - (float)value) / 360); 
         else if(cc_type2 == ID_DAC0_ADSR_ENABLE) 
           dac0_adsr_enable = value; 
           
@@ -264,7 +264,7 @@ void loop() {
         else if(cc_type2 == ID_DAC1_WAVEFORM) 
           dac1_lfo.setWaveForm(value);
         else if(cc_type2 == ID_DAC1_PHASE) 
-          dac1_lfo.setMode1Phase((4095 - (float)value) / 4096); 
+          dac1_lfo.setMode1Phase((360 - (float)value) / 360); 
         else if(cc_type2 == ID_DAC1_ADSR_ENABLE) 
           dac1_adsr_enable = value; 
         
@@ -292,7 +292,7 @@ void loop() {
         else if (cc_type2 == ID_SYNC_MODE1_RATE)
           sync_mode1_rate = (int)value; 
         else if (cc_type2 == ID_SYNC_PHASE)
-          sync_phase = (4095 - (float)value) / 4096;                          // phase is received in 4096 steps -> convert to float from 0 to 1 
+          sync_phase = (360 - (float)value) / 360;                          // phase is received in 360 steps -> convert to float from 0 to 1 
         break;
     }
   }
