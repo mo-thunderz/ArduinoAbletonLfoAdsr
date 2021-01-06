@@ -89,8 +89,8 @@ float           sync_phase = 0;
 
 // internal variables
 int rx_state = 0;
-byte cc_type1;
-byte cc_type2;
+byte cc_sync;
+byte cc_control;
 byte cc_val1;
 byte cc_val2;
 unsigned long   t = 0;
@@ -130,7 +130,7 @@ void setup() {
   digitalWrite(LED_SYNC, false);
   digitalWrite(LED_BUILTIN, false);
   
-  Serial.begin(38400);
+  Serial.begin(115200);
 }
 
 void loop() {
@@ -194,13 +194,13 @@ void loop() {
     rx_state++;
     switch (rx_state) {
       case 1:                     // first byte is always 255 for sync
-        cc_type1 = Serial.read();
-        if(cc_type1 != 255) {     // reset if first is not 255 sync byte
+        cc_sync = Serial.read();
+        if(cc_sync != 255) {     // reset if first is not 255 sync byte
           rx_state = 0;
         }
         break;
       case 2:                     // second is the control byte
-        cc_type2 = Serial.read();
+        cc_control = Serial.read();
         break;        
       case 3:                     // third is the most significant byte of the value
         cc_val1 = Serial.read();     
@@ -213,71 +213,73 @@ void loop() {
         int value = getInt(cc_val1, cc_val2);
         
         // Track specific IDs
-        if (cc_type2 == ID_SONG_BPM) {
+        if (cc_control == ID_SONG_BPM) {
           bpm = ((float)value)/10;
           dac0_lfo.setMode1Bpm(bpm);
           dac1_lfo.setMode1Bpm(bpm);
         }
-        else if (cc_type2 == ID_SONG_MEASURE) {
-            if(dac0_lfo.getMode() and (int)(10*(value-1)/dac0_lfo.getMode1Rate())%10 == 0)
-              dac0_lfo.sync(t);     // reset SYNC
-            if(dac1_lfo.getMode() and (int)(10*(value-1)/dac1_lfo.getMode1Rate())%10 == 0)
-              dac1_lfo.sync(t);     // reset SYNC
-            if((int)(10*(value-1)/_freqArray[sync_mode1_rate])%10 == 0)
-              sync_t0 = t;          // reset SYNC            
-            digitalWrite(LED_MEASURE, !digitalRead(LED_MEASURE));
+        else if (cc_control == ID_SONG_MEASURE) {
+            if(value !=0) {       // when track stops measure = 0
+              if(dac0_lfo.getMode() and (int)(10*(value-1)/dac0_lfo.getMode1Rate())%10 == 0)
+                dac0_lfo.sync(t);     // reset SYNC
+              if(dac1_lfo.getMode() and (int)(10*(value-1)/dac1_lfo.getMode1Rate())%10 == 0)
+                dac1_lfo.sync(t);     // reset SYNC
+              if((int)(10*(value-1)/_freqArray[sync_mode1_rate])%10 == 0)
+                sync_t0 = t;          // reset SYNC            
+              digitalWrite(LED_MEASURE, !digitalRead(LED_MEASURE));
+            }
         }
               
         // LFO - DAC0
-        else if (cc_type2 == ID_DAC0_MODE)
+        else if (cc_control == ID_DAC0_MODE)
           dac0_lfo.setMode(value);
-        else if (cc_type2 == ID_DAC0_MODE0_FREQ)
+        else if (cc_control == ID_DAC0_MODE0_FREQ)
           dac0_lfo.setMode0Freq(((float)value)/100, t);
-        else if (cc_type2 == ID_DAC0_MODE1_RATE)
+        else if (cc_control == ID_DAC0_MODE1_RATE)
           dac0_lfo.setMode1Rate(_freqArray[(int)value]);
-        else if(cc_type2 == ID_DAC0_AMPL) {
+        else if(cc_control == ID_DAC0_AMPL) {
           dac0_ampl = value;
           dac0_lfo.setAmpl(dac0_ampl);
         }
-        else if(cc_type2 == ID_DAC0_AMPL_OFFSET) 
+        else if(cc_control == ID_DAC0_AMPL_OFFSET) 
           dac0_lfo.setAmplOffset(value);
-        else if(cc_type2 == ID_DAC0_WAVEFORM) 
+        else if(cc_control == ID_DAC0_WAVEFORM) 
           dac0_lfo.setWaveForm(value);
-        else if(cc_type2 == ID_DAC0_PHASE) 
+        else if(cc_control == ID_DAC0_PHASE) 
           dac0_lfo.setMode1Phase((360 - (float)value) / 360); 
-        else if(cc_type2 == ID_DAC0_ADSR_ENABLE) 
+        else if(cc_control == ID_DAC0_ADSR_ENABLE) 
           dac0_adsr_enable = value; 
           
         // LFO - DAC1                                          
-        else if (cc_type2 == ID_DAC1_MODE) 
+        else if (cc_control == ID_DAC1_MODE) 
           dac1_lfo.setMode(value);
-        else if (cc_type2 == ID_DAC1_MODE0_FREQ)
+        else if (cc_control == ID_DAC1_MODE0_FREQ)
           dac1_lfo.setMode0Freq(((float)value)/100, t);                         // freq is tuned in steps of 0.01 -> thus divide INT received by 100         
-        else if (cc_type2 == ID_DAC1_MODE1_RATE)    
+        else if (cc_control == ID_DAC1_MODE1_RATE)    
           dac1_lfo.setMode1Rate(_freqArray[(int)value]);
-        else if(cc_type2 == ID_DAC1_AMPL) {
+        else if(cc_control == ID_DAC1_AMPL) {
           dac1_ampl = value;
           dac1_lfo.setAmpl(dac1_ampl);
         }
-        else if(cc_type2 == ID_DAC1_AMPL_OFFSET) 
+        else if(cc_control == ID_DAC1_AMPL_OFFSET) 
           dac1_lfo.setAmplOffset(value);
-        else if(cc_type2 == ID_DAC1_WAVEFORM) 
+        else if(cc_control == ID_DAC1_WAVEFORM) 
           dac1_lfo.setWaveForm(value);
-        else if(cc_type2 == ID_DAC1_PHASE) 
+        else if(cc_control == ID_DAC1_PHASE) 
           dac1_lfo.setMode1Phase((360 - (float)value) / 360); 
-        else if(cc_type2 == ID_DAC1_ADSR_ENABLE) 
+        else if(cc_control == ID_DAC1_ADSR_ENABLE) 
           dac1_adsr_enable = value; 
         
         // ADSR
-        else if (cc_type2 == ID_ADSR_ATTACK)
+        else if (cc_control == ID_ADSR_ATTACK)
           adsr.setAttack(1000*value);                                          // times 1000 -> conversion from ms to µs  
-        else if (cc_type2 == ID_ADSR_DECAY)
+        else if (cc_control == ID_ADSR_DECAY)
           adsr.setDecay(1000*value);                                           // times 1000 -> conversion from ms to µs  
-        else if (cc_type2 == ID_ADSR_SUSTAIN)
+        else if (cc_control == ID_ADSR_SUSTAIN)
           adsr.setSustain(pow(10, -1*(float)value/1000)*(DACSIZE - 1));        // parameter is logarithmic from 0 to -70dB -> in MaxForLive it is multiplied with -100 for transportation to the Arduino. The value sent to the Arduino is thus an INT between 0 and 7000. To convert back -> time -1 and divide by 100. Then we need to convet from log to lin, which is done with 10^x/10 -> therefore we divide by 1000 here.
-        else if (cc_type2 == ID_ADSR_RELEASE)
+        else if (cc_control == ID_ADSR_RELEASE)
           adsr.setRelease(1000*value);                                         // times 1000 -> conversion from ms to µs  
-        else if (cc_type2 == ID_ADSR_TRIGGER) {
+        else if (cc_control == ID_ADSR_TRIGGER) {
           if(value == 1)
             adsr.noteOn(t);
           else if (value == 0)
@@ -285,13 +287,13 @@ void loop() {
         }
 
         // Sync
-        else if (cc_type2 == ID_SYNC_MODE)
+        else if (cc_control == ID_SYNC_MODE)
           sync_mode = value;
-        else if (cc_type2 == ID_SYNC_MODE0_FREQ)
+        else if (cc_control == ID_SYNC_MODE0_FREQ)
           sync_mode0_freq = ((float)value)/100;                               // freq is tuned in steps of 0.01 -> thus divide INT received by 100
-        else if (cc_type2 == ID_SYNC_MODE1_RATE)
+        else if (cc_control == ID_SYNC_MODE1_RATE)
           sync_mode1_rate = (int)value; 
-        else if (cc_type2 == ID_SYNC_PHASE)
+        else if (cc_control == ID_SYNC_PHASE)
           sync_phase = (360 - (float)value) / 360;                          // phase is received in 360 steps -> convert to float from 0 to 1 
         break;
     }
