@@ -1,7 +1,6 @@
 # ArduinoAbletonLfoAdsr
-Ableton and Arduino source code of an LFO+ADSR, generated in an Arduino Due and controlled through Ableton with Max for Live (Cycling74).
-
-Youtube video will follow shortly
+Ableton and Arduino source code of an LFO+ADSR, generated in an Arduino Due and controlled through Ableton with Max for Live (Cycling74). Please see below for a youtube post explaining the installation and main parts of the code:
+https://youtu.be/Hl7n_ObG3Go
 
 # Installation
 1) first install the LFO and ADSR libraries (https://github.com/mo-thunderz/lfo and https://github.com/mo-thunderz/adsr)
