@@ -14,7 +14,10 @@ Youtube video will follow shortly
 4.1.2021: 
 1) fixed a small issue that whenever you start a track it does not send out a trigger to the Arduino if the last time the track was played it ended in the same measure count. 
 2) Reduced the stepsize for "phase" from 4096 to 360 (that is precise enough for phase and does not load the serial port as much when sweeping the phase).
-3) Cleaned up naming for port mapping in Ableton
+3) Cleaned up naming for port mapping in Ableton.
+
+6.1.2021: 
+1) added a latency parameter to compensate for latency of external hardware. 
 
 # How to use
 Please refer to the following youtube post:
